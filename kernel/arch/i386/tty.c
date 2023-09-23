@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <string.h>
 
+#include <kernel/io.h>
 #include <kernel/tty.h>
 
 #include "vga.h"
@@ -75,4 +76,17 @@ void terminal_scroll(void) {
     }
 
     terminal_row = VGA_HEIGHT - 1;
+}
+
+void enable_cursor(uint8_t cursor_start, uint8_t cursor_end) {
+	outb(0x3D4, 0x0A);
+	outb(0x3D5, (inb(0x3D5) & 0xC0) | cursor_start);
+ 
+	outb(0x3D4, 0x0B);
+	outb(0x3D5, (inb(0x3D5) & 0xE0) | cursor_end);
+}
+
+void terminal_disablecursor(void) {
+	outb(0x3D4, 0x0A);
+	outb(0x3D5, 0x20);
 }
