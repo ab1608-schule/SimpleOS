@@ -4,5 +4,6 @@
 
 void kernel_main(void) {
 	terminal_initialize();
+	terminal_enablecursor(14, 15);
 	printf("SimpleOS");
 }
