@@ -27,7 +27,7 @@ wget ftp://ftp.gnu.org/gnu/gdb/gdb-$GDB_VERSION.tar.xz
 tar -xvf gdb-$GDB_VERSION.tar.xz
 mkdir build-gdb
 cd build-gdb
-../gdb-$GDB_VERSION/configure--prefix="$PREFIX" --disable-werror
+../gdb-$GDB_VERSION/configure --prefix="$PREFIX" --disable-werror
 make all-gdb -j$(($(nproc) + 1))
 make install-gdb -j$(($(nproc) + 1))
 cd ../
