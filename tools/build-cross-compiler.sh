@@ -42,8 +42,8 @@ cd build-gcc
 ../gcc-$GCC_VERSION/configure --target=$TARGET --prefix="$PREFIX" --disable-nls --enable-languages=c,c++ --without-headers
 make all-gcc -j$(($(nproc) + 1))
 make all-target-libgcc -j$(($(nproc) + 1))
-make install-gcc
-make install-target-libgcc
+make install-gcc -j$(($(nproc) + 1))
+make install-target-libgcc -j$(($(nproc) + 1))
 cd ../
 
 # Cleanup
