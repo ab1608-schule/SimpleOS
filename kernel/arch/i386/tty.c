@@ -50,6 +50,7 @@ void terminal_putchar(char c) {
 	}
 	if (terminal_row == VGA_HEIGHT)
 		terminal_scroll();
+	terminal_updatecursor(terminal_column, terminal_row);
 }
 
 void terminal_write(const char* data, size_t size) {
@@ -78,7 +79,7 @@ void terminal_scroll(void) {
     terminal_row = VGA_HEIGHT - 1;
 }
 
-void enable_cursor(uint8_t cursor_start, uint8_t cursor_end) {
+void terminal_enablecursor(uint8_t cursor_start, uint8_t cursor_end) {
 	outb(0x3D4, 0x0A);
 	outb(0x3D5, (inb(0x3D5) & 0xC0) | cursor_start);
  
@@ -89,4 +90,14 @@ void enable_cursor(uint8_t cursor_start, uint8_t cursor_end) {
 void terminal_disablecursor(void) {
 	outb(0x3D4, 0x0A);
 	outb(0x3D5, 0x20);
+}
+
+void terminal_updatecursor(int x, int y)
+{
+	uint16_t pos = y * VGA_WIDTH + x;
+ 
+	outb(0x3D4, 0x0F);
+	outb(0x3D5, (uint8_t) (pos & 0xFF));
+	outb(0x3D4, 0x0E);
+	outb(0x3D5, (uint8_t) ((pos >> 8) & 0xFF));
 }
