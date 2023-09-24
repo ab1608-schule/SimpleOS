@@ -42,39 +42,42 @@
 #define GDT_DATA_PL3 SEG_DESCTYPE(1) | SEG_PRES(1) | SEG_SAVL(0) | \
                      SEG_LONG(0)     | SEG_SIZE(1) | SEG_GRAN(1) | \
                      SEG_PRIV(3)     | SEG_DATA_RDWR
- 
-struct gdt_ptr {
-  uint16_t limit;
-  uint32_t base;
-} __attribute__((packed));
 
-uint64_t gdt[5];
-struct gdt_ptr gp;
+typedef struct __attribute__((packed)) {
+  uint16_t limit_low;  // Lower 16 bits of the limit
+  uint16_t base_low;   // Lower 16 bits of the base
+  uint8_t base_middle; // Next 8 bits of the base
+  uint8_t access;      // Access flags
+  uint8_t granularity; // Granularity and high 4 bits of the limit
+  uint8_t base_high;   // Last 8 bits of the base
+} gdt_entry_t;
+
+typedef struct __attribute__((packed)) {
+  uint16_t limit; // The upper 16 bits of all selector limits
+  uint32_t base;  // The address of the first gdt_entry struct
+} gdt_ptr_t;
+
+gdt_entry_t gdt[5];
+gdt_ptr_t gdtp;
 
 extern void _gdt_flush(void);
 
 void gdt_setentry(unsigned int i, uint32_t base, uint32_t limit, uint16_t flag) {
-  uint64_t descriptor;
+  gdt_entry_t* entry = &gdt[i];
 
-  // Create the high 32 bit segment
-  descriptor  =  limit       & 0x000F0000; // set limit bits 19:16
-  descriptor |= (flag <<  8) & 0x00F0FF00; // set type, p, dpl, s, g, d/b, l and avl fields
-  descriptor |= (base >> 16) & 0x000000FF; // set base bits 23:16
-  descriptor |=  base        & 0xFF000000; // set base bits 31:24
-
-  // Shift by 32 to allow for low part of segment
-  descriptor <<= 32;
-
-  // Create the low 32 bit segment
-  descriptor |= base  << 16;         // set base bits 15:0
-  descriptor |= limit  & 0x0000FFFF; // set limit bits 15:0
-
-  gdt[i] = descriptor;
+  entry->limit_low = limit & 0xFFFF;
+  entry->base_low = base & 0xFFFF;
+  entry->base_middle = (base >> 16) & 0xFF;
+  entry->access = flag;
+  entry->granularity = (limit >> 16) & 0x0F;
+  entry->granularity |= (flag >> 8) & 0xF0;
+  entry->base_high = (base >> 24) & 0xFF;
 }
 
+
 void gdt_install() {
-  gp.limit = (sizeof(uint64_t) * 3) - 1;
-  gp.base = (uint32_t)&gdt;
+  gdtp.limit = (sizeof(uint64_t) * 5) - 1;
+  gdtp.base = (uint32_t)&gdt;
 
   gdt_setentry(0, 0, 0, 0);
   gdt_setentry(1, 0, 0xfffff, GDT_CODE_PL0);
@@ -83,7 +86,7 @@ void gdt_install() {
   gdt_setentry(4, 0, 0xfffff, GDT_DATA_PL3);
 
   _gdt_flush(); // Defined in boot.s
-}	
+}
 
 void memory_init(void) {
   gdt_install();

@@ -8,11 +8,6 @@ void kernel_main(void) {
 	terminal_initialize();
 	terminal_enablecursor(14, 15);
 	printf("SimpleOS\n\n");
-	printf("Setting up memory... ");
-	memory_init();
-  printf("Done\n");
-	printf("Setting up interrupts... ");
-  interrupt_init();
-	printf("Done\n");
-	//asm volatile("int $0x0");
+	printf("Setting up memory... ");     memory_init();    printf("Done\n");
+	printf("Setting up interrupts... "); interrupt_init(); printf("Done\n");
 }

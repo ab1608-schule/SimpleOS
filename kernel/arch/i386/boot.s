@@ -39,9 +39,9 @@ _start:
 
 // Flush global descriptor table
 .global _gdt_flush
-.extern gp
+.extern gdtp
 _gdt_flush:
-    lgdt (gp)
+    lgdt (gdtp)
     movw $0x10, %ax
     movw %ax, %ds
     movw %ax, %es
