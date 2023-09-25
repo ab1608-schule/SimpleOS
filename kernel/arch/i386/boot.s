@@ -26,6 +26,9 @@ stack_top:
 _start:
 	movl $stack_top, %esp
 
+    // Disable interrupts (Later enabled by the kernel)
+    cli
+
 	// Call the global constructors.
 	call _init
 
@@ -53,6 +56,8 @@ flush2:
     ret
 
 
+// Interrupt handling
+
 .macro isr_err_stub num
 .extern exception_handler
 isr_stub_\num:
@@ -68,7 +73,6 @@ isr_stub_\num:
 
 .extern exception_handler
 
-.set i, 0
 isr_no_err_stub 0
 isr_no_err_stub 1
 isr_no_err_stub 2

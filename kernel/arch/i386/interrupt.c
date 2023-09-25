@@ -25,7 +25,7 @@ void exception_handler(void) {
                 "hlt"); // Completely hangs the computer
 }
 
-void idt_set_descriptor(uint8_t vector, void* isr, uint8_t flags) {
+void idt_setentry(uint8_t vector, void* isr, uint8_t flags) {
     idt_entry_t* descriptor = &idt[vector];
  
     descriptor->isr_low        = (uint32_t)isr & 0xFFFF;
@@ -42,13 +42,21 @@ void idt_init(void) {
     idtr.limit = (uint16_t)sizeof(idt_entry_t) * 256 - 1;
  
     for (uint8_t vector = 0; vector < 32; vector++) {
-        idt_set_descriptor(vector, isr_stub_table[vector], 0x8E);
+        idt_setentry(vector, isr_stub_table[vector], 0x8E);
     }
  
-    __asm__ volatile ("lidt %0" : : "m"(idtr)); // load the new IDT
-    __asm__ volatile ("sti"); // set the interrupt flag
+    asm volatile ("lidt %0" : : "m"(idtr)); // Load IDT
+}
+
+void interrupt_enable(void) {
+  asm volatile ("sti");
+}
+
+void interrupt_disable(void) {
+  asm volatile("cli");
 }
 
 void interrupt_init(void) {
   idt_init();
+  interrupt_enable();
 }
