@@ -1,25 +1,23 @@
-// Declare constants for the multiboot header.
-.set ALIGN,    1<<0             // align loaded modules on page boundaries
+// Multiboot constants
+.set ALIGN,    1<<0             // Align loaded modules on page boundaries
 .set MEMINFO,  1<<1             // provide memory map
-.set FLAGS,    ALIGN | MEMINFO  // this is the Multiboot 'flag' field
-.set MAGIC,    0x1BADB002       // 'magic number' lets bootloader find the header
-.set CHECKSUM, -(MAGIC + FLAGS) // checksum of above, to prove we are multiboot
+.set FLAGS,    ALIGN | MEMINFO  
+.set MAGIC,    0x1BADB002
+.set CHECKSUM, -(MAGIC + FLAGS)
 
-// Declare a header as in the Multiboot Standard.
 .section .multiboot
 .align 4
 .long MAGIC
 .long FLAGS
 .long CHECKSUM
 
-// Reserve a stack for the initial thread.
+// Stack
 .section .bss
 .align 16
 stack_bottom:
 .skip 16384 // 16 KiB
 stack_top:
 
-// The kernel entry point.
 .section .text
 .global _start
 .type _start, @function
@@ -28,11 +26,7 @@ _start:
 
     // Disable interrupts (Later enabled by the kernel)
     cli
-
-	// Call the global constructors.
 	call _init
-
-	// Transfer control to the main kernel.
 	call kernel_main
 
 	// Hang if kernel_main unexpectedly returns.
@@ -55,23 +49,17 @@ _gdt_flush:
 flush2:
     ret
 
-
 // Interrupt handling
 
 .macro isr_err_stub num
-.extern exception_handler
 isr_stub_\num:
-    call exception_handler
-    iret
+    call interrupt_common_handler
 .endm
 
 .macro isr_no_err_stub num
 isr_stub_\num:
-    call exception_handler
-    iret
+    call interrupt_common_handler
 .endm
-
-.extern exception_handler
 
 isr_no_err_stub 0
 isr_no_err_stub 1
@@ -140,3 +128,29 @@ isr_stub_table:
     .long isr_stub_29
     .long isr_stub_30
     .long isr_stub_31
+
+.extern exception_handler
+interrupt_common_handler:
+    push %ebp
+    push %edi
+    push %esi
+    push %edx
+    push %ecx
+    push %ebx
+    push %eax
+
+    push %esp
+    call exception_handler
+    add $4, %esp
+
+    pop %eax
+    pop %ebx
+    pop %ecx
+    pop %edx
+    pop %esi
+    pop %edi
+    pop %ebp
+
+    add $8, %esp // Get error code & interrupt number from stack
+
+    iret

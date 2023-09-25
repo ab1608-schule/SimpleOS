@@ -10,4 +10,5 @@ void kernel_main(void) {
 	printf("SimpleOS\n\n");
 	printf("Setting up memory... ");     memory_init();    printf("Done\n");
 	printf("Setting up interrupts... "); interrupt_init(); printf("Done\n");
+	asm volatile("int $0x10"); // TEST CODE - REMOVE WHEN DONE TESTING
 }
